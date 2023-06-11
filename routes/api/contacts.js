@@ -19,11 +19,11 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/:contactId", async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
-    const contact = await getContactById(req.params.contactId);
+    const contact = await getContactById(req.params.id);
     if (contact) {
-      res.json(contacts);
+      res.json(contact);
     } else {
       res.status(404).json({ message: "Contacts not found" });
     }
@@ -45,9 +45,9 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.delete("/:contactId", async (req, res, next) => {
+router.delete("/:id", async (req, res, next) => {
   try {
-    const contact = await removeContact(req.params.contactId);
+    const contact = await removeContact(req.params.id);
     if (contact !== undefined) {
       res.json({ message: "Contact deleted" });
     } else {
@@ -58,14 +58,14 @@ router.delete("/:contactId", async (req, res, next) => {
   }
 });
 
-router.put("/:contactId", async (req, res, next) => {
+router.put("/:id", async (req, res, next) => {
   try {
     const { error } = schema.validate(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
     const { name, email, phone } = req.body;
-    const updatedContact = await updateContact(req.params.contactId, {
+    const updatedContact = await updateContact(req.params.id, {
       name,
       email,
       phone,
