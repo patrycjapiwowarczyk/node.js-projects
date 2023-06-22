@@ -21,6 +21,10 @@ const contactSchema = new mongoose.Schema(
       default: false,
       required: [true, "Set is favorite for a contact"],
     },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    },
   },
   { collection: "contacts", versionKey: false }
 );
