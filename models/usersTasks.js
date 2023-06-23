@@ -1,4 +1,4 @@
-const User = require("../models/userSchema");
+const UserSchema = require("./userSchema");
 
 const usersTasks = {
   getUserByEmail: (email) => {
