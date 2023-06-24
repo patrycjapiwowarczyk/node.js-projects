@@ -2,37 +2,42 @@ const ContactSchema = require("./contactsSchema");
 const { contactsValidate } = require("./contactsValidate");
 
 const contactsTasks = {
-  getContacts: () => {
-    return ContactSchema.find();
+  getContacts: (owner) => {
+    return ContactSchema.find({ owner });
   },
 
-  getContactById: (id) => {
-    return ContactSchema.find(id);
+  getContactById: (id, owner) => {
+    return ContactSchema.find({ _id: id, owner });
   },
 
-  addContact: (contactBody) => {
+  getFavoriteContacts: (owner) => {
+    return Contact.find({ owner, favorite: true });
+  },
+
+  addContact: (contactBody, owner) => {
     const { error } = contactsValidate(contactBody);
     if (error) {
       throw new Error(error.details[0].message);
     }
-    return ContactSchema.create(contactBody);
+    const newContact = { ...contactBody, owner };
+    return ContactSchema.create(newContact);
   },
 
-  removeContact: (id) => {
-    return ContactSchema.findByIdAndRemove(id);
+  removeContact: (id, owner) => {
+    return ContactSchema.findByIdAndRemove({ _id: id, owner });
   },
 
-  updateContact: (id, contactBody) => {
+  updateContact: (id, contactBody, owner) => {
     const { error } = contactsValidate(contactBody);
     if (error) {
       throw new Error(error.details[0].message);
     }
     const { name, email, phone } = contactBody;
-    return ContactSchema.findByIdAndUpdate(id, { name, email, phone }, { new: true });
+    return ContactSchema.findByIdAndUpdate({ _id: id, owner }, { name, email, phone }, { new: true });
   },
 
-  toggleFavourite: (contactId, favorite) => {
-    return ContactSchema.findByIdAndUpdate(contactId, { $set: { favorite } }, { new: true });
+  toggleFavourite: (contactId, favorite, owner) => {
+    return ContactSchema.findByIdAndUpdate({ _id: id, owner }, { $set: { favorite } }, { new: true });
   },
 };
 
