@@ -41,6 +41,13 @@ app.use(express.json());
 app.use("/api/contacts", authorization, contactsRouter);
 app.use("/api/users", usersRouter);
 
+app.use(express.static("public"));
+
+app.use(function (err, req, res, next) {
+  console.log("This is the invalid field ->", err.field);
+  next(err);
+});
+
 app.use((req, res) => {
   res.status(404).json({ message: "Not found" });
 });
