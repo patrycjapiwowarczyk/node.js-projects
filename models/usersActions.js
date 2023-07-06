@@ -1,12 +1,19 @@
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { registrationValidate, loginValidate } = require("./usersValidate");
+const { registrationValidate, loginValidate, emailValidate } = require("./usersValidate");
 const UserSchema = require("./userSchema");
 const gravatar = require("gravatar");
 const path = require("path");
 const fs = require("fs");
 const usersTasks = require("../models/usersTasks");
+const { v4: uuidv4 } = require("uuid");
+const userSchema = require("./userSchema");
+
+function generateEmailToken() {
+  const token = uuidv4();
+  return token;
+}
 
 const userActions = {
   signup: async (req, res, next) => {
@@ -35,9 +42,14 @@ const userActions = {
           s: "250",
           r: "pg",
         }),
+        verify: false,
+        verificationToken: generateEmailToken(),
       };
 
       const createdUser = await UserSchema.create(newUser);
+
+      await usersTasks.sendVerificationEmail(createdUser.email, createdUser.verificationToken);
+
       res.status(201).json({ user: createdUser });
     } catch (error) {
       next(error);
@@ -112,6 +124,57 @@ const userActions = {
       user.avatarURL = `/avatars/${avatarFileName}`;
       await user.save();
       res.json({ avatarURL: user.avatarURL });
+    } catch (error) {
+      next(error);
+    }
+  },
+  verifyEmail: async (req, res, next) => {
+    try {
+      const { verificationToken } = req.params;
+      const user = await UserSchema.findOne({ verificationToken });
+      console.log(user);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.verify) {
+        return res.status(400).json({ message: "Verification has already been passed" });
+      }
+
+      user.verificationToken = "null";
+      user.verify = true;
+      await user.save();
+
+      res.status(200).json({ message: "Verification successful" });
+    } catch (error) {
+      next(error);
+    }
+  },
+  resendVerificationEmail: async (req, res, next) => {
+    try {
+      const { email } = req.body;
+
+      const { error } = emailValidate(req.body);
+      if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+      }
+
+      const user = await UserSchema.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.verify) {
+        return res.status(400).json({ message: "Verification has already been passed" });
+      }
+
+      const verificationToken = generateEmailToken();
+      user.verificationToken = verificationToken;
+      await user.save();
+
+      await usersTasks.sendVerificationEmail(email, verificationToken);
+
+      res.status(200).json({ message: "Verification email sent" });
     } catch (error) {
       next(error);
     }
