@@ -70,13 +70,13 @@ const userActions = {
         return res.status(401).json({ message: `User with email ${email} doesn't exist` });
       }
 
-      if (!user.verificationToken) {
-        return res.status(401).json({ message: `User not verified` });
-      }
-
       const isPasswordCorrect = await bcrypt.compare(password, user.password);
       if (!isPasswordCorrect) {
         return res.status(401).json({ message: `Incorrect email or password` });
+      }
+
+      if (user.verify === false) {
+        return res.status(401).json({ message: `User not verified` });
       }
 
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
