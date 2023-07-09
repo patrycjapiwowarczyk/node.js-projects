@@ -2,6 +2,7 @@ const UserSchema = require("./userSchema");
 const path = require("path");
 const fs = require("fs");
 const Jimp = require("jimp");
+const transporter = require("../nodemailer/nodemailerConfig");
 
 const usersTasks = {
   getUserByEmail: (email) => {
@@ -32,6 +33,28 @@ const usersTasks = {
       return pathAvatar;
     } catch (error) {
       await fs.promises.unlink(file.path);
+      throw error;
+    }
+  },
+
+  sendVerificationEmail: async (userEmail, userToken) => {
+    try {
+      const serverUrl = `${process.env.BASE_URL}:${process.env.API_PORT}` || `http://localhost:${process.env.API_PORT}`;
+      const verificstionLink = `${serverUrl}/api/users/verify/${userToken}`;
+
+      await UserSchema.findOneAndUpdate({ email: userEmail }, { verificationToken: userToken }, { new: true });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: userEmail,
+        subject: "Verification email",
+        html: `<p>Click the link to verify your email: <a href="${verificstionLink}">${verificstionLink}</a></p>`,
+      };
+
+      const sendingEmail = await transporter.sendMail(mailOptions);
+      console.log("Email sent", sendingEmail.messageId, sendingEmail.envelope);
+    } catch (error) {
+      console.log(error);
       throw error;
     }
   },

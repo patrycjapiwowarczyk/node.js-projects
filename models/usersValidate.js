@@ -19,5 +19,12 @@
     return schema.validate(data);
   };
 
-  module.exports = { registrationValidate, loginValidate };
+  const emailValidate = (data) => {
+    const schema = Joi.object({
+      email: Joi.string().email().required(),
+    });
+    return schema.validate(data);
+  };
+
+  module.exports = { registrationValidate, loginValidate, emailValidate };
 }
